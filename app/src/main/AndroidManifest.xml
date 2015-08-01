@@ -10,6 +10,10 @@
         android:icon="@mipmap/ic_launcher"
         android:label="@string/app_name"
         android:theme="@style/AppTheme" >
+        <provider
+            android:authorities="net.vectortime.android.p2_spotifystreamer.app"
+            android:name=".database.MusicProvider"
+            android:exported="true"/>
         <activity
             android:name=".MainActivity"
             android:configChanges="orientation|screenSize"
