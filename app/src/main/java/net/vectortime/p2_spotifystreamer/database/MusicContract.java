@@ -50,17 +50,18 @@ public class MusicContract {
             return ARTIST_CONTENT_URI.buildUpon().appendPath(artistId).appendPath(Integer.toString(rank)).build();
         }
 
+        public static String getIdFromUri(Uri uri) {
+            return uri.getPathSegments().get(1);
+        }
+
+        public static String[] getSelectionArgsFromUri(Uri uri){
+            String[] returnArray = new String[2];
+            returnArray[0] = uri.getPathSegments().get(1);
+            returnArray[1] = uri.getPathSegments().get(2);
+            return returnArray;
+        }
 
     }
 
-    public static String getIdFromUri(Uri uri) {
-        return uri.getPathSegments().get(1);
-    }
 
-    public static String[] getSelectionArgsFromUri(Uri uri){
-        String[] returnArray = new String[2];
-        returnArray[0] = uri.getPathSegments().get(1);
-        returnArray[1] = uri.getPathSegments().get(2);
-        return returnArray;
-    }
 }

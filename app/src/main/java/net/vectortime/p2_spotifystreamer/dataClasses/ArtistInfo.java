@@ -30,6 +30,23 @@ public class ArtistInfo implements Parcelable {
         this.artistId = null;
     }
 
+    protected ArtistInfo(Parcel in) {
+        artistName = in.readString();
+        artistId = in.readString();
+    }
+
+    public static final Creator<ArtistInfo> CREATOR = new Creator<ArtistInfo>() {
+        @Override
+        public ArtistInfo createFromParcel(Parcel in) {
+            return new ArtistInfo(in);
+        }
+
+        @Override
+        public ArtistInfo[] newArray(int size) {
+            return new ArtistInfo[size];
+        }
+    };
+
     public String getSmallestImage() {
         String returnString = null;
         int smallest_size = 0;

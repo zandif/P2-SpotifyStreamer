@@ -2,11 +2,15 @@ package net.vectortime.p2_spotifystreamer;
 
 import android.support.v7.app.ActionBarActivity;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.View;
+import android.widget.ImageButton;
 
 
 public class TrackPlayerActivity extends ActionBarActivity {
+    private final String LOG_TAG = TrackPlayerActivity.class.getSimpleName();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -35,5 +39,14 @@ public class TrackPlayerActivity extends ActionBarActivity {
         }
 
         return super.onOptionsItemSelected(item);
+    }
+
+    public void changeSong(View view) {
+        ImageButton button = (ImageButton) view;
+
+        String buttonText = (String) button.getContentDescription();
+
+        Log.i(LOG_TAG, "Button: " + buttonText);
+
     }
 }

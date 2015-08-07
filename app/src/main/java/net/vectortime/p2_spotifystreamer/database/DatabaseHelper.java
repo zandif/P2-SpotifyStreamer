@@ -3,6 +3,7 @@ package net.vectortime.p2_spotifystreamer.database;
 import android.content.Context;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
+import android.util.Log;
 
 import net.vectortime.p2_spotifystreamer.database.MusicContract.TrackEntry;
 
@@ -28,12 +29,17 @@ public class DatabaseHelper extends SQLiteOpenHelper {
                 TrackEntry.COLUMN_ALBUM_NAME + " TEXT NOT NULL, " +
                 TrackEntry.COLUMN_ALBUM_ART_LARGE + " TEXT NOT NULL, " +
                 TrackEntry.COLUMN_ALBUM_ART_SMALL + " TEXT NOT NULL, " +
-                TrackEntry.COLUMN_TRACK_RANK + " INTEGER NOT NULL," +
-                TrackEntry.COLUMN_TRACK_ID + " TEXT NOT NULL," +
-                TrackEntry.COLUMN_TRACK_NAME + " TEXT NOT NULL," +
-                TrackEntry.COLUMN_TRACK_DURATION + " INTEGER NOT NULL" +
-                ");";
+                TrackEntry.COLUMN_TRACK_RANK + " INTEGER NOT NULL, " +
+                TrackEntry.COLUMN_TRACK_ID + " TEXT NOT NULL, " +
+                TrackEntry.COLUMN_TRACK_NAME + " TEXT NOT NULL, " +
+                TrackEntry.COLUMN_TRACK_DURATION + " INTEGER NOT NULL, " +
+                "UNIQUE ("+TrackEntry.COLUMN_ARTIST_ID + ", " +
+                TrackEntry.COLUMN_TRACK_RANK + ") ON CONFLICT REPLACE);";
 
+                // Unique constraint page: http://stackoverflow.com/questions/2701877/sqlite-table-constraint-unique-on-multiple-columns
+
+        Log.i(DatabaseHelper.class.getSimpleName(), "Database create string: " +
+                ""+SQL_CREATE_TRACKS_TABLE);
         db.execSQL(SQL_CREATE_TRACKS_TABLE);
     }
 

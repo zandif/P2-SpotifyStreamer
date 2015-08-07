@@ -1,7 +1,10 @@
 package net.vectortime.p2_spotifystreamer.dataClasses;
 
+import android.content.ContentValues;
 import android.os.Parcel;
 import android.os.Parcelable;
+
+import net.vectortime.p2_spotifystreamer.database.MusicContract;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -12,12 +15,17 @@ public class TrackInfo implements Parcelable {
 
     public String songId;
     public String songTitle;
+    public long songDuration;
+    public int songRank;
     public String ablumId;
     public List<ImageParcel> images;
     public String albumTitle;
+    public String artistId;
+    public String artistTitle;
 
     public TrackInfo(String inId, String inName, String inAlbumId, List<Image> inAlbumImages,
-                     String inAlbumName) {
+                     String inAlbumName, long inSongDuration, int inSongRank, String inArtistId,
+                     String inArtistTitle) {
         this.songId = inId;
         this.songTitle = inName;
         this.ablumId = inAlbumId;
@@ -26,6 +34,10 @@ public class TrackInfo implements Parcelable {
         for (int i = 0; i < inAlbumImages.size(); i++)
             images.add(new ImageParcel(inAlbumImages.get(i)));
         this.albumTitle = inAlbumName;
+        this.songDuration = inSongDuration;
+        this.songRank = inSongRank;
+        this.artistId = inArtistId;
+        this.artistTitle = inArtistTitle;
     }
 
     private TrackInfo(Parcel in){
@@ -34,6 +46,10 @@ public class TrackInfo implements Parcelable {
         albumTitle = in.readString();
         in.readList(images, null);
         albumTitle = in.readString();
+        songDuration = in.readLong();
+        songRank = in.readInt();
+        artistId = in.readString();
+        artistTitle = in.readString();
     }
 
     public String getSmallestImage() {
@@ -55,6 +71,34 @@ public class TrackInfo implements Parcelable {
         return returnString;
     }
 
+    public String getLargestImage() {
+        String returnString = null;
+        int largestSize = 0;
+        if (images != null && images.size() > 0)
+            for (int i = 0; i < images.size(); i++) {
+                if (images.get(i).width > largestSize) {
+                    returnString = images.get(i).url;
+                    largestSize = images.get(i).width;
+                }
+            }
+        return returnString;
+    }
+
+    public ContentValues getContentValues() {
+        ContentValues contentValues = new ContentValues();
+        contentValues.put(MusicContract.TrackEntry.COLUMN_ALBUM_NAME, albumTitle);
+        contentValues.put(MusicContract.TrackEntry.COLUMN_ALBUM_ID, ablumId);
+        contentValues.put(MusicContract.TrackEntry.COLUMN_ALBUM_ART_LARGE, getLargestImage());
+        contentValues.put(MusicContract.TrackEntry.COLUMN_ALBUM_ART_SMALL, getSmallestImage());
+        contentValues.put(MusicContract.TrackEntry.COLUMN_ARTIST_ID, artistId);
+        contentValues.put(MusicContract.TrackEntry.COLUMN_ARTIST_NAME, artistTitle);
+        contentValues.put(MusicContract.TrackEntry.COLUMN_TRACK_DURATION, songDuration);
+        contentValues.put(MusicContract.TrackEntry.COLUMN_TRACK_ID, songId);
+        contentValues.put(MusicContract.TrackEntry.COLUMN_TRACK_NAME, songTitle);
+        contentValues.put(MusicContract.TrackEntry.COLUMN_TRACK_RANK, songRank);
+        return  contentValues;
+    }
+
     @Override
     public int describeContents() {
         return 0;
@@ -67,6 +111,10 @@ public class TrackInfo implements Parcelable {
         dest.writeString(albumTitle);
         dest.writeList(images);
         dest.writeString(albumTitle);
+        dest.writeLong(songDuration);
+        dest.writeInt(songRank);
+        dest.writeString(artistId);
+        dest.writeString(artistTitle);
     }
 
     public final Parcelable.Creator<TrackInfo> CREATOR = new Parcelable
@@ -101,6 +149,18 @@ public class TrackInfo implements Parcelable {
             height = in.height;
         }
 
+        public final Creator<ImageParcel> CREATOR = new Creator<ImageParcel>() {
+            @Override
+            public ImageParcel createFromParcel(Parcel in) {
+                return new ImageParcel(in);
+            }
+
+            @Override
+            public ImageParcel[] newArray(int size) {
+                return new ImageParcel[size];
+            }
+        };
+
         @Override
         public int describeContents() {
             return 0;
@@ -113,4 +173,5 @@ public class TrackInfo implements Parcelable {
             dest.writeInt(height.intValue());
         }
     }
+
 }

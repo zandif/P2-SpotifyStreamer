@@ -2,9 +2,11 @@ package net.vectortime.p2_spotifystreamer;
 
 import android.content.Context;
 import android.content.Intent;
+import android.net.Uri;
 import android.os.AsyncTask;
 import android.support.v4.app.Fragment;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -18,6 +20,7 @@ import android.widget.Toast;
 import com.squareup.picasso.Picasso;
 
 import net.vectortime.p2_spotifystreamer.dataClasses.TrackInfo;
+import net.vectortime.p2_spotifystreamer.database.MusicContract;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -106,9 +109,8 @@ public class TopTracksActivityFragment extends Fragment {
 
                 // Explicit intent to launch the detail activity
                 Intent trackPlayerIntent = new Intent(getActivity(), TrackPlayerActivity.class);
-                trackPlayerIntent.putExtra(Intent.EXTRA_TEXT, info.songId);
-                trackPlayerIntent.putExtra(Intent.EXTRA_SHORTCUT_ICON, info.getSmallestImage());
-                trackPlayerIntent.putExtra(Intent.EXTRA_UID, info.songId);
+                trackPlayerIntent.putExtra(Intent.EXTRA_TEXT, info.artistId);
+                trackPlayerIntent.putExtra(Intent.EXTRA_UID, info.songRank);
                 startActivity(trackPlayerIntent);
             }
         });
@@ -141,8 +143,10 @@ public class TopTracksActivityFragment extends Fragment {
             for (int i = 0; i < tracks.tracks.size(); i++){
                 Track track = tracks.tracks.get(i);
 //                Log.i(LOG_TAG, i + " " + track.name);
-                info.add(new TrackInfo(track.id, track.name, track.album.id, track.album.images,
-                        track.album.name));
+                TrackInfo tempInfo = new TrackInfo(track.id, track.name, track.album.id, track.album.images,
+                        track.album.name,track.duration_ms,i,track.artists.get(0).id,track
+                        .artists.get(0).name);
+                info.add(tempInfo);
             }
             return info.toArray(new TrackInfo[info.size()]);
         }
@@ -157,6 +161,11 @@ public class TopTracksActivityFragment extends Fragment {
                     max = inTrackInfo.length;
                 for (int i = 0; i < max; i++){
                     mTracksAdapter.addAll(inTrackInfo[i]);
+                    Uri insertedItem = getActivity().getContentResolver().insert(MusicContract.TrackEntry
+                                    .TRACK_CONTENT_URI,
+                            inTrackInfo[i].getContentValues());
+                    Log.d(LOG_TAG, "Inserted track: " + insertedItem.toString());
+
                 }
             } else {
                 // Display a toast

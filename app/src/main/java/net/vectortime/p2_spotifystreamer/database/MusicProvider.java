@@ -48,7 +48,7 @@ public class MusicProvider extends ContentProvider {
         String selection;
 
         selection = sTrackByTrackID;
-        selectionArgs = new String[]{MusicContract.getIdFromUri(uri)};
+        selectionArgs = new String[]{MusicContract.TrackEntry.getIdFromUri(uri)};
 
         return sQueryBuilder.query(mHelper.getReadableDatabase(), projection, selection,
                 selectionArgs, null, null, MusicContract.TrackEntry.COLUMN_TRACK_RANK);
@@ -59,7 +59,7 @@ public class MusicProvider extends ContentProvider {
         String selection;
 
         selection = sTrackByTrackID;
-        selectionArgs = new String[]{MusicContract.getIdFromUri(uri)};
+        selectionArgs = new String[]{MusicContract.TrackEntry.getIdFromUri(uri)};
 
         return sQueryBuilder.query(mHelper.getReadableDatabase(), projection, selection,
                 selectionArgs, null, null, MusicContract.TrackEntry.COLUMN_TRACK_RANK);
@@ -70,7 +70,7 @@ public class MusicProvider extends ContentProvider {
         String selection;
 
         selection = sTrackByArtistAndRank;
-        selectionArgs = MusicContract.getSelectionArgsFromUri(uri);
+        selectionArgs = MusicContract.TrackEntry.getSelectionArgsFromUri(uri);
 
         return sQueryBuilder.query(mHelper.getReadableDatabase(), projection, selection,
                 selectionArgs, null, null, MusicContract.TrackEntry.COLUMN_TRACK_RANK);
@@ -108,8 +108,13 @@ public class MusicProvider extends ContentProvider {
             case TRACKS_FROM_ARTIST:
             case TRACK_FROM_ARTIST_AND_RANK: {
                 retCursor = mHelper.getReadableDatabase().query(MusicContract.TrackEntry
-                        .TABLE_NAME, projection, selection, selectionArgs, null, null, sortOrder);
-                break;            }
+                        .TABLE_NAME, projection, sTrackByArtistAndRank,
+                        MusicContract.TrackEntry.getSelectionArgsFromUri(uri),
+                        null,
+                        null,
+                        sortOrder);
+                break;
+            }
             default:
                 throw new UnsupportedOperationException("Unknown uri 1: " + uri);
         }
