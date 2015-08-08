@@ -170,7 +170,7 @@ public class TopTracksActivityFragment extends Fragment {
             } else {
                 // Display a toast
                 Context context = getActivity();
-                CharSequence text = "No track results found for the artist " + mArtistName;
+                CharSequence text = "No track results found for the mArtistText " + mArtistName;
                 int duration = Toast.LENGTH_SHORT;
                 Toast toast = Toast.makeText(context, text, duration);
                 toast.show();

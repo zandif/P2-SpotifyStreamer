@@ -1,5 +1,6 @@
 package net.vectortime.p2_spotifystreamer;
 
+import android.content.Intent;
 import android.support.v7.app.ActionBarActivity;
 import android.os.Bundle;
 import android.util.Log;
@@ -16,6 +17,10 @@ public class TrackPlayerActivity extends ActionBarActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_track_player);
+//        getActionBar().setDisplayHomeAsUpEnabled(false);
+        android.support.v7.app.ActionBar ab = getSupportActionBar();
+        if (ab != null)
+            ab.setDisplayHomeAsUpEnabled(false);
     }
 
 

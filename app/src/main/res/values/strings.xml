@@ -5,4 +5,7 @@
     <string name="search_hint">Artist</string>
     <string name="title_activity_top_tracks">Top 10 Tracks</string>
     <string name="title_activity_track_player">TrackPlayer</string>
+    <string name="track_player_play">Play</string>
+    <string name="track_player_previous">Previous</string>
+    <string name="track_player_next">Next</string>
 </resources>

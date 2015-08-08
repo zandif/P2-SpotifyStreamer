@@ -150,11 +150,11 @@ public class MainActivityFragment extends Fragment {
             List<ArtistInfo> info = new ArrayList<>();
             for (int i = 0; i < artists.size(); i++){
                 Artist artist = artists.get(i);
-//                Log.i(LOG_TAG, i + " " + artist.name);
+//                Log.i(LOG_TAG, i + " " + mArtistText.name);
                 info.add(new ArtistInfo(artist.name, artist.images, artist.id));
-//                for (int j = 0; j < artist.images.size(); j++) {
-//                    Log.i(LOG_TAG, j + " " + artist.images.get(j).url + " " + artist.images.get
-//                            (j).width.toString() + "x" + artist.images.get(j).height.toString());
+//                for (int j = 0; j < mArtistText.images.size(); j++) {
+//                    Log.i(LOG_TAG, j + " " + mArtistText.images.get(j).url + " " + mArtistText.images.get
+//                            (j).width.toString() + "x" + mArtistText.images.get(j).height.toString());
 //                }
             }
             return info.toArray(new ArtistInfo[info.size()]);
@@ -174,7 +174,7 @@ public class MainActivityFragment extends Fragment {
             } else {
                 // Display a toast
                 Context context = getActivity();
-                CharSequence text = "No results found for that artist: " + artistQueryName;
+                CharSequence text = "No results found for that mArtistText: " + artistQueryName;
                 int duration = Toast.LENGTH_SHORT;
                 Toast toast = Toast.makeText(context, text, duration);
                 toast.show();

@@ -1,22 +1,17 @@
 package net.vectortime.p2_spotifystreamer;
 
 import android.app.Fragment;
-import android.app.Service;
-import android.content.ContentResolver;
+import android.app.LoaderManager;
 import android.content.CursorLoader;
 import android.content.Intent;
+import android.content.Loader;
 import android.database.Cursor;
-import android.media.Image;
-import android.media.MediaPlayer;
 import android.net.Uri;
 import android.os.Bundle;
-import android.os.IBinder;
-import android.support.annotation.Nullable;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.TextView;
 
@@ -24,7 +19,6 @@ import com.squareup.picasso.Picasso;
 
 import net.vectortime.p2_spotifystreamer.dataClasses.TrackInfo;
 import net.vectortime.p2_spotifystreamer.database.MusicContract;
-import net.vectortime.p2_spotifystreamer.database.MusicProvider;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -34,12 +28,15 @@ import java.util.concurrent.TimeUnit;
 /**
  * A placeholder fragment containing a simple view.
  */
-public class TrackPlayerActivityFragment extends Fragment {
+public class TrackPlayerActivityFragment extends Fragment implements LoaderManager
+        .LoaderCallbacks<Cursor>{
     private final String LOG_TAG = TrackPlayerActivityFragment.class.getSimpleName();
 
     private int mSongRank;
     private String mArtistId;
     private List<TrackInfo> mTracks;
+
+    private static final int TRACK_PLAYER_LOADER = 0;
 
     private static final String[] PLAYER_COLUMNS = {
             MusicContract.TrackEntry.TABLE_NAME + "." + MusicContract.TrackEntry._ID,
@@ -68,14 +65,57 @@ public class TrackPlayerActivityFragment extends Fragment {
     static final int COL_ALBUM_LARGE = 10;
     static final int COL_ALBUM_SMALL = 11;
 
+    TextView mArtistText;
+    TextView mAlbumText;
+    ImageView mAlbumArt;
+    TextView mSongText;
+    TextView mDuration;
+    TextView mCurrentTime;
+
     public TrackPlayerActivityFragment() {
     }
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
+        Log.v(LOG_TAG, "In onCreateView");
         View rootView = inflater.inflate(R.layout.fragment_track_player, container, false);
 
+        mArtistText = (TextView) rootView.findViewById(R.id.track_play_artist);
+        mAlbumText = (TextView) rootView.findViewById(R.id.track_play_album);
+        mAlbumArt = (ImageView) rootView.findViewById(R.id.track_play_album_art);
+        mSongText = (TextView) rootView.findViewById(R.id.track_play_track_title);
+        mDuration = (TextView) rootView.findViewById(R.id.track_play_total_time);
+        mCurrentTime = (TextView) rootView.findViewById(R.id.track_play_current_time);
+
+        return rootView;
+    }
+
+    private void populateFields(TrackInfo info) {
+        mArtistText.setText(info.artistTitle);
+        mAlbumText.setText(info.albumTitle);
+        mSongText.setText(info.songTitle);
+        long time = info.songDuration;
+        long minutes = (time/1000) / 60;
+        long seconds = (time/1000) % 60;
+        String length = String.format("%02d:%02d",
+                TimeUnit.MILLISECONDS.toMinutes(time),
+                TimeUnit.MILLISECONDS.toSeconds(time) -
+                        TimeUnit.MILLISECONDS.toSeconds(TimeUnit.MILLISECONDS.toMinutes(time)));
+        length = String.format("%02d:%02d", minutes, seconds);
+        mDuration.setText(length);
+        Picasso.with(getActivity()).load(info.getLargestImage()).into(mAlbumArt);
+    }
+
+    @Override
+    public void onActivityCreated(Bundle savedInstanceState) {
+        getLoaderManager().initLoader(TRACK_PLAYER_LOADER, null, this);
+        super.onActivityCreated(savedInstanceState);
+    }
+
+    @Override
+    public Loader<Cursor> onCreateLoader(int id, Bundle args) {
+        Log.v(LOG_TAG, "In onCreateLoader");
         Intent intent = getActivity().getIntent();
         if (intent != null && intent.hasExtra(Intent.EXTRA_TEXT)) {
             mArtistId = intent.getStringExtra(Intent.EXTRA_TEXT);
@@ -84,29 +124,21 @@ public class TrackPlayerActivityFragment extends Fragment {
                 mSongRank = intent.getIntExtra(Intent.EXTRA_UID, 0);
             }
 
-            TextView tv = (TextView) rootView.findViewById(R.id.track_play_artist);
-            tv.setText(mArtistId);
-            TextView tv2 = (TextView) rootView.findViewById(R.id.track_play_current_time);
-            tv2.setText(Integer.toString(mSongRank));
-
-            getTracks(rootView);
+//            TextView tv = (TextView) rootView.findViewById(R.id.track_play_artist);
+//            tv.setText(mArtistId);
+//            TextView tv2 = (TextView) rootView.findViewById(R.id.track_play_current_time);
+//            tv2.setText(Integer.toString(mSongRank));
         }
-
-        return rootView;
+        Uri myUri = MusicContract.TrackEntry.buildTrackByArtist(mArtistId);
+        return new CursorLoader(getActivity(),myUri,PLAYER_COLUMNS,null,null,null);
     }
 
-    private void getTracks(View rootView) {
-//        Uri myUri = MusicContract.TrackEntry.buildTrackByArtistWithRank(mArtistId, mSongRank);
-        Uri myUri = MusicContract.TrackEntry.buildTrackByArtist(mArtistId);
-//            Cursor cur = new CursorLoader(getActivity(), myUri, PLAYER_COLUMNS, null, null, null);
-        Log.i(LOG_TAG, "URI: "+myUri);
-        Cursor cur = getActivity().getContentResolver().query(myUri, PLAYER_COLUMNS, null,
-                null, null);
+    @Override
+    public void onLoadFinished(Loader<Cursor> loader, Cursor cur) {
+        Log.v(LOG_TAG, "In onLoadFinished");
         cur.moveToFirst();
         mTracks = new ArrayList<TrackInfo>();
         do {
-            // long inSongDuration, int inSongRank, String
-            //inArtistId, String inArtistTitle
             kaaes.spotify.webapi.android.models.Image smallImage = new kaaes.spotify.webapi.android
                     .models.Image();
             smallImage.url = cur.getString(COL_ALBUM_SMALL);
@@ -129,56 +161,14 @@ public class TrackPlayerActivityFragment extends Fragment {
             for (int i = 0; i < cur.getColumnCount(); i++){
                 Log.i(LOG_TAG, i+": "+cur.getString(i));
             }
+
+            if (mSongRank == info.songRank)
+                populateFields(info);
+
         } while (cur.moveToNext());
-//        populateFields(rootView, cur);
-        if (mTracks.size() > mSongRank)
-            populateFields(rootView, mTracks.get(mSongRank));
-        cur.close();
+
     }
 
-    private void populateFields(View rootView, Cursor cursor) {
-        TextView artist = (TextView) rootView.findViewById(R.id.track_play_artist);
-        TextView album = (TextView) rootView.findViewById(R.id.track_play_album);
-        ImageView albumArt = (ImageView) rootView.findViewById(R.id.track_play_album_art);
-        TextView song = (TextView) rootView.findViewById(R.id.track_play_track_title);
-        TextView duration = (TextView) rootView.findViewById(R.id.track_play_total_time);
-        TextView currentTime = (TextView) rootView.findViewById(R.id.track_play_current_time);
-
-        artist.setText(cursor.getString(COL_ARTIST_NAME));
-        album.setText(cursor.getString(COL_ALBUM_NAME));
-        song.setText(cursor.getString(COL_TRACK_NAME));
-        long time = cursor.getLong(COL_TRACK_DURATION);
-        long minutes = (time/1000) / 60;
-        long seconds = (time/1000) % 60;
-        String length = String.format("%02d:%02d",
-                TimeUnit.MILLISECONDS.toMinutes(time),
-                TimeUnit.MILLISECONDS.toSeconds(time) -
-                        TimeUnit.MILLISECONDS.toSeconds(TimeUnit.MILLISECONDS.toMinutes(time)));
-        length = String.format("%02d:%02d", minutes, seconds);
-        duration.setText(length);
-        Picasso.with(getActivity()).load(cursor.getString(COL_ALBUM_LARGE)).into(albumArt);
-    }
-
-    private void populateFields(View rootView, TrackInfo info) {
-        TextView artist = (TextView) rootView.findViewById(R.id.track_play_artist);
-        TextView album = (TextView) rootView.findViewById(R.id.track_play_album);
-        ImageView albumArt = (ImageView) rootView.findViewById(R.id.track_play_album_art);
-        TextView song = (TextView) rootView.findViewById(R.id.track_play_track_title);
-        TextView duration = (TextView) rootView.findViewById(R.id.track_play_total_time);
-        TextView currentTime = (TextView) rootView.findViewById(R.id.track_play_current_time);
-
-        artist.setText(info.artistTitle);
-        album.setText(info.albumTitle);
-        song.setText(info.songTitle);
-        long time = info.songDuration;
-        long minutes = (time/1000) / 60;
-        long seconds = (time/1000) % 60;
-        String length = String.format("%02d:%02d",
-                TimeUnit.MILLISECONDS.toMinutes(time),
-                TimeUnit.MILLISECONDS.toSeconds(time) -
-                        TimeUnit.MILLISECONDS.toSeconds(TimeUnit.MILLISECONDS.toMinutes(time)));
-        length = String.format("%02d:%02d", minutes, seconds);
-        duration.setText(length);
-        Picasso.with(getActivity()).load(info.getLargestImage()).into(albumArt);
-    }
+    @Override
+    public void onLoaderReset(Loader<Cursor> loader) {    }
 }
