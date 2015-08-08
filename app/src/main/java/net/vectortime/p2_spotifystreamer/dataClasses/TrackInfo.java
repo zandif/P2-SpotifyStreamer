@@ -15,6 +15,7 @@ public class TrackInfo implements Parcelable {
 
     public String songId;
     public String songTitle;
+    public String songPreview;
     public long songDuration;
     public int songRank;
     public String ablumId;
@@ -23,11 +24,12 @@ public class TrackInfo implements Parcelable {
     public String artistId;
     public String artistTitle;
 
-    public TrackInfo(String inId, String inName, String inAlbumId, List<Image> inAlbumImages,
-                     String inAlbumName, long inSongDuration, int inSongRank, String inArtistId,
-                     String inArtistTitle) {
+    public TrackInfo(String inId, String inName, String inPreview, String inAlbumId, List<Image>
+            inAlbumImages, String inAlbumName, long inSongDuration, int inSongRank, String
+            inArtistId, String inArtistTitle) {
         this.songId = inId;
         this.songTitle = inName;
+        this.songPreview = inPreview;
         this.ablumId = inAlbumId;
 //            this.images = inAlbumImages;
         images = new ArrayList<>();
@@ -43,6 +45,7 @@ public class TrackInfo implements Parcelable {
     private TrackInfo(Parcel in){
         songId = in.readString();
         songTitle = in.readString();
+        songPreview = in.readString();
         albumTitle = in.readString();
         in.readList(images, null);
         albumTitle = in.readString();
@@ -95,6 +98,7 @@ public class TrackInfo implements Parcelable {
         contentValues.put(MusicContract.TrackEntry.COLUMN_TRACK_DURATION, songDuration);
         contentValues.put(MusicContract.TrackEntry.COLUMN_TRACK_ID, songId);
         contentValues.put(MusicContract.TrackEntry.COLUMN_TRACK_NAME, songTitle);
+        contentValues.put(MusicContract.TrackEntry.COLUMN_TRACK_PREVIEW, songPreview);
         contentValues.put(MusicContract.TrackEntry.COLUMN_TRACK_RANK, songRank);
         return  contentValues;
     }
@@ -108,6 +112,7 @@ public class TrackInfo implements Parcelable {
     public void writeToParcel(Parcel dest, int flags) {
         dest.writeString(songId);
         dest.writeString(songTitle);
+        dest.writeString(songPreview);
         dest.writeString(albumTitle);
         dest.writeList(images);
         dest.writeString(albumTitle);

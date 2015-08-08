@@ -143,9 +143,9 @@ public class TopTracksActivityFragment extends Fragment {
             for (int i = 0; i < tracks.tracks.size(); i++){
                 Track track = tracks.tracks.get(i);
 //                Log.i(LOG_TAG, i + " " + track.name);
-                TrackInfo tempInfo = new TrackInfo(track.id, track.name, track.album.id, track.album.images,
-                        track.album.name,track.duration_ms,i,track.artists.get(0).id,track
-                        .artists.get(0).name);
+                TrackInfo tempInfo = new TrackInfo(track.id, track.name, track.preview_url, track
+                        .album.id, track.album.images, track.album.name,track.duration_ms,i,track
+                        .artists.get(0).id,track.artists.get(0).name);
                 info.add(tempInfo);
             }
             return info.toArray(new TrackInfo[info.size()]);

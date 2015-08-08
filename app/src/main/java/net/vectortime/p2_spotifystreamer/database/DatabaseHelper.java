@@ -32,6 +32,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
                 TrackEntry.COLUMN_TRACK_RANK + " INTEGER NOT NULL, " +
                 TrackEntry.COLUMN_TRACK_ID + " TEXT NOT NULL, " +
                 TrackEntry.COLUMN_TRACK_NAME + " TEXT NOT NULL, " +
+                TrackEntry.COLUMN_TRACK_PREVIEW + " TEXT NOT NULL, " +
                 TrackEntry.COLUMN_TRACK_DURATION + " INTEGER NOT NULL, " +
                 "UNIQUE ("+TrackEntry.COLUMN_ARTIST_ID + ", " +
                 TrackEntry.COLUMN_TRACK_RANK + ") ON CONFLICT REPLACE);";

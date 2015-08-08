@@ -31,6 +31,7 @@ public class TestUtilities extends AndroidTestCase{
         testValues.put(MusicContract.TrackEntry.COLUMN_TRACK_DURATION, 169760);
         testValues.put(MusicContract.TrackEntry.COLUMN_TRACK_ID, "1C0pmryC2MdXfa7MZ9uIrU");
         testValues.put(MusicContract.TrackEntry.COLUMN_TRACK_NAME, "One Week");
+        testValues.put(MusicContract.TrackEntry.COLUMN_TRACK_PREVIEW, "https://p.scdn.co/mp3-preview/889f0af9e390ff0c1c17eafa6eaa7f41409a0016");
         testValues.put(MusicContract.TrackEntry.COLUMN_TRACK_RANK, 1);
         return  testValues;
     }

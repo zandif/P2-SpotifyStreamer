@@ -80,7 +80,8 @@ public class MusicProvider extends ContentProvider {
         final UriMatcher um = new UriMatcher(UriMatcher.NO_MATCH);
         final String authority = MusicContract.CONTENT_AUTHORITY;
 
-        um.addURI(authority, MusicContract.PATH_ARTIST, TRACKS_FROM_ARTIST);
+//        um.addURI(authority, MusicContract.PATH_ARTIST, ARIST);
+        um.addURI(authority, MusicContract.PATH_ARTIST + "/*", TRACKS_FROM_ARTIST);
         um.addURI(authority, MusicContract.PATH_ARTIST + "/*/#", TRACK_FROM_ARTIST_AND_RANK);
 
         um.addURI(authority, MusicContract.PATH_TRACK, TRACK);
@@ -106,6 +107,13 @@ public class MusicProvider extends ContentProvider {
                 break;
             }
             case TRACKS_FROM_ARTIST:
+                retCursor = mHelper.getReadableDatabase().query(MusicContract.TrackEntry
+                                .TABLE_NAME, projection, sTrackByArtist,
+                        new String[]{MusicContract.TrackEntry.getIdFromUri(uri)},
+                        null,
+                        null,
+                        sortOrder);
+                break;
             case TRACK_FROM_ARTIST_AND_RANK: {
                 retCursor = mHelper.getReadableDatabase().query(MusicContract.TrackEntry
                         .TABLE_NAME, projection, sTrackByArtistAndRank,

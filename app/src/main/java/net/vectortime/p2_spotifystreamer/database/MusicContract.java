@@ -26,12 +26,15 @@ public class MusicContract {
         public static final String COLUMN_TRACK_ID = "track_id";
         public static final String COLUMN_TRACK_NAME = "track_name";
         public static final String COLUMN_TRACK_DURATION = "track_duration";
+        public static final String COLUMN_TRACK_PREVIEW = "track_preview";
 
         // TrackID searches
         public static final Uri TRACK_CONTENT_URI = BASE_CONTENT_URI.buildUpon().appendPath
                 (PATH_TRACK).build();
         public static final String TRACK_CONTENT_TYPE =
                 ContentResolver.CURSOR_DIR_BASE_TYPE + "/" + CONTENT_AUTHORITY + "/" + PATH_TRACK;
+
+
         public static Uri buildTrackByTrackID(String trackID){
             return TRACK_CONTENT_URI.buildUpon().appendPath(trackID).build();
         }
