@@ -1,5 +1,8 @@
 package net.vectortime.p2_spotifystreamer;
 
+import android.app.Dialog;
+
+import android.app.DialogFragment;
 import android.app.Fragment;
 import android.app.LoaderManager;
 import android.content.CursorLoader;
@@ -8,10 +11,12 @@ import android.content.Loader;
 import android.database.Cursor;
 import android.net.Uri;
 import android.os.Bundle;
+
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.Window;
 import android.widget.ImageView;
 import android.widget.TextView;
 
@@ -28,12 +33,13 @@ import java.util.concurrent.TimeUnit;
 /**
  * A placeholder fragment containing a simple view.
  */
-public class TrackPlayerActivityFragment extends Fragment implements LoaderManager
+public class TrackPlayerActivityFragment extends DialogFragment implements LoaderManager
         .LoaderCallbacks<Cursor>{
     private final String LOG_TAG = TrackPlayerActivityFragment.class.getSimpleName();
 
     private int mSongRank;
     private String mArtistId;
+
     private List<TrackInfo> mTracks;
 
     private static final int TRACK_PLAYER_LOADER = 0;
@@ -65,6 +71,9 @@ public class TrackPlayerActivityFragment extends Fragment implements LoaderManag
     static final int COL_ALBUM_LARGE = 10;
     static final int COL_ALBUM_SMALL = 11;
 
+    static final String ARTIST_KEY = "artist_key";
+    static final String RANK_KEY = "rank_key";
+
     TextView mArtistText;
     TextView mAlbumText;
     ImageView mAlbumArt;
@@ -89,6 +98,14 @@ public class TrackPlayerActivityFragment extends Fragment implements LoaderManag
         mCurrentTime = (TextView) rootView.findViewById(R.id.track_play_current_time);
 
         return rootView;
+    }
+
+    @Override
+    public Dialog onCreateDialog(Bundle savedInstanceState) {
+        Log.d(LOG_TAG, "In onCreateDialog");
+        Dialog dialog = super.onCreateDialog(savedInstanceState);
+        dialog.requestWindowFeature(Window.FEATURE_NO_TITLE);
+        return dialog;
     }
 
     private void populateFields(TrackInfo info) {
@@ -117,6 +134,7 @@ public class TrackPlayerActivityFragment extends Fragment implements LoaderManag
     public Loader<Cursor> onCreateLoader(int id, Bundle args) {
         Log.v(LOG_TAG, "In onCreateLoader");
         Intent intent = getActivity().getIntent();
+        Bundle arguments = getArguments();
         if (intent != null && intent.hasExtra(Intent.EXTRA_TEXT)) {
             mArtistId = intent.getStringExtra(Intent.EXTRA_TEXT);
 
@@ -128,6 +146,9 @@ public class TrackPlayerActivityFragment extends Fragment implements LoaderManag
 //            tv.setText(mArtistId);
 //            TextView tv2 = (TextView) rootView.findViewById(R.id.track_play_current_time);
 //            tv2.setText(Integer.toString(mSongRank));
+        } else if (arguments != null && arguments.containsKey(ARTIST_KEY)) {
+            mArtistId = arguments.getString(ARTIST_KEY);
+            mSongRank = arguments.getInt(RANK_KEY);
         }
         Uri myUri = MusicContract.TrackEntry.buildTrackByArtist(mArtistId);
         return new CursorLoader(getActivity(),myUri,PLAYER_COLUMNS,null,null,null);

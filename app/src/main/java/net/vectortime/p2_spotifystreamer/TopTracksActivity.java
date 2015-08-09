@@ -15,7 +15,7 @@ public class TopTracksActivity extends ActionBarActivity {
         setContentView(R.layout.activity_toptracks);
 
         if (savedInstanceState == null) {
-            getSupportFragmentManager().beginTransaction()
+            getFragmentManager().beginTransaction()
                     .add(R.id.toptracks_fragment, new TopTracksActivityFragment())
                     .commit();
         }

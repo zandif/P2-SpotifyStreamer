@@ -1,11 +1,13 @@
 package net.vectortime.p2_spotifystreamer;
 
+import android.app.FragmentManager;
 import android.content.Context;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.AsyncTask;
-import android.support.v4.app.Fragment;
+import android.app.Fragment;
 import android.os.Bundle;
+
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -43,18 +45,24 @@ public class TopTracksActivityFragment extends Fragment {
     private ArrayList<TrackInfo> mTracksList;
 
     private final String PARCEL_KEY = "tracks";
+    static final String ARTIST_ID_KEY = "artistid";
+    static final String ARTIST_NAME_KEY = "artistname";
+    static final String ARTIST_ICON_KEY = "artisticon";
+    private final String LOG_TAG = TopTracksActivityFragment.class.getSimpleName();
 
     public TopTracksActivityFragment() {
     }
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
+        Log.d(LOG_TAG, "onCreate");
         super.onCreate(savedInstanceState);
         this.setRetainInstance(true);
     }
 
     @Override
     public void onSaveInstanceState(Bundle outState){
+        Log.d(LOG_TAG, "onSaveInstanceState");
         outState.putParcelableArrayList(PARCEL_KEY, mTracksList);
 //        Log.i(TopTracksActivityFragment.class.getSimpleName(), "Saving " + mTracksList.size() +
 //                " entries to parcel.");
@@ -64,6 +72,7 @@ public class TopTracksActivityFragment extends Fragment {
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
+        Log.d(LOG_TAG, "onCreateView");
 
         View rootView = inflater.inflate(R.layout.fragment_toptracks, container, false);
 
@@ -80,14 +89,26 @@ public class TopTracksActivityFragment extends Fragment {
             if (intent.hasExtra(Intent.EXTRA_UID)) {
                 mArtistId = intent.getStringExtra(Intent.EXTRA_UID);
             }
+
+            Log.d(LOG_TAG, "Intent pulled the following values: " + mArtistId + " = " +
+                    mArtistName);
+        }
+
+        Bundle arguments = getArguments();
+        if (arguments != null && arguments.containsKey(ARTIST_ID_KEY)){
+            mArtistId = arguments.getString(ARTIST_ID_KEY);
+            mArtistName = arguments.getString(ARTIST_NAME_KEY);
+            mArtistImageURL = arguments.getString(ARTIST_ICON_KEY);
+            Log.d(LOG_TAG, "arguments pulled the following values: " + mArtistId + " = " +
+                    mArtistName);
         }
 
         if (savedInstanceState == null || !savedInstanceState.containsKey(PARCEL_KEY)) {
             mTracksList = new ArrayList<>(10);
+            Log.d(LOG_TAG, "Empty list");
         } else {
             mTracksList = savedInstanceState.getParcelableArrayList(PARCEL_KEY);
-//            Log.i(TopTracksActivityFragment.class.getSimpleName(), "Got " + mTracksList.size() + " " +
-//                    "entries from parcel.");
+            Log.d(LOG_TAG, "Got " + mTracksList.size() + " entries from parcel.");
         }
 
 //        mTracksList.add(new TrackInfo("0", "A Sky Full of Stars", "0", null, "Ghost " +
@@ -105,13 +126,25 @@ public class TopTracksActivityFragment extends Fragment {
         myListView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> adapterView, View view, int i, long l) {
-                TrackInfo info = (TrackInfo) mTracksAdapter.getItem(i);
+                TrackInfo info = mTracksAdapter.getItem(i);
+                FragmentManager fragmentManager = getActivity().getFragmentManager();
 
-                // Explicit intent to launch the detail activity
-                Intent trackPlayerIntent = new Intent(getActivity(), TrackPlayerActivity.class);
-                trackPlayerIntent.putExtra(Intent.EXTRA_TEXT, info.artistId);
-                trackPlayerIntent.putExtra(Intent.EXTRA_UID, info.songRank);
-                startActivity(trackPlayerIntent);
+                boolean mIsLargeLayout = getResources().getBoolean(R.bool.large_layout);
+
+                if (mIsLargeLayout) {
+                    TrackPlayerActivityFragment fragment = new TrackPlayerActivityFragment();
+                    Bundle arguments = new Bundle();
+                    arguments.putString(TrackPlayerActivityFragment.ARTIST_KEY, info.artistId);
+                    arguments.putInt(TrackPlayerActivityFragment.RANK_KEY, info.songRank);
+                    fragment.setArguments(arguments);
+                    fragment.show(fragmentManager, "PLAYER");
+                } else {
+                    // Explicit intent to launch the detail activity
+                    Intent trackPlayerIntent = new Intent(getActivity(), TrackPlayerActivity.class);
+                    trackPlayerIntent.putExtra(Intent.EXTRA_TEXT, info.artistId);
+                    trackPlayerIntent.putExtra(Intent.EXTRA_UID, info.songRank);
+                    startActivity(trackPlayerIntent);
+                }
             }
         });
 

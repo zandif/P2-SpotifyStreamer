@@ -3,7 +3,7 @@ package net.vectortime.p2_spotifystreamer;
 import android.content.Context;
 import android.content.Intent;
 import android.os.AsyncTask;
-import android.support.v4.app.Fragment;
+import android.app.Fragment;
 import android.os.Bundle;
 import android.text.Editable;
 import android.text.TextWatcher;
@@ -36,8 +36,17 @@ import kaaes.spotify.webapi.android.models.Image;
  */
 public class MainActivityFragment extends Fragment {
     private ArtistArrayAdapter mArtistsAdapter;
+    private int mPosition = ListView.INVALID_POSITION;
+    private final String POSITION_KEY = "position";
 
     public MainActivityFragment() {
+    }
+
+    @Override
+    public void onSaveInstanceState(Bundle outState) {
+        if (mPosition != ListView.INVALID_POSITION)
+            outState.putInt(POSITION_KEY, mPosition);
+        super.onSaveInstanceState(outState);
     }
 
     @Override
@@ -78,21 +87,25 @@ public class MainActivityFragment extends Fragment {
         myListView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> adapterView, View view, int i, long l) {
-                ArtistInfo info = (ArtistInfo) mArtistsAdapter.getItem(i);
+                ArtistInfo info = mArtistsAdapter.getItem(i);
+                ((Callback) getActivity()).onItemSelected(info);
 
-                // Explicit intent to launch the detail activity
-                Intent topTracksIntent = new Intent(getActivity(), TopTracksActivity.class);
-                topTracksIntent.putExtra(Intent.EXTRA_TEXT, info.artistName);
-                topTracksIntent.putExtra(Intent.EXTRA_SHORTCUT_ICON, info.getLargestImage());
-                topTracksIntent.putExtra(Intent.EXTRA_UID, info.artistId);
-                startActivity(topTracksIntent);
+//                // Explicit intent to launch the detail activity
+//                Intent topTracksIntent = new Intent(getActivity(), TopTracksActivity.class);
+//                topTracksIntent.putExtra(Intent.EXTRA_TEXT, info.artistName);
+//                topTracksIntent.putExtra(Intent.EXTRA_SHORTCUT_ICON, info.getLargestImage());
+//                topTracksIntent.putExtra(Intent.EXTRA_UID, info.artistId);
+//                startActivity(topTracksIntent);
+                mPosition = i;
             }
         });
 
+        if (savedInstanceState != null && savedInstanceState.containsKey(POSITION_KEY)) {
+            mPosition = savedInstanceState.getInt(POSITION_KEY);
+        }
+
         return rootView;
     }
-
-
 
     private class ArtistArrayAdapter extends ArrayAdapter<ArtistInfo> {
         private final String LOG_TAG = ArtistArrayAdapter.class.getSimpleName();
@@ -180,5 +193,9 @@ public class MainActivityFragment extends Fragment {
                 toast.show();
             }
         }
+    }
+
+    public interface Callback {
+        public void onItemSelected(ArtistInfo selectedArtist);
     }
 }

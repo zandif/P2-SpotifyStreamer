@@ -5,18 +5,18 @@
               android:minHeight="?android:listPreferredItemHeight"
               android:orientation="horizontal"
               android:layout_gravity="center_vertical"
-    >
+              android:background="@drawable/touch_selector">
 
     <ImageView
         android:layout_width="64dp"
         android:layout_height="64dp"
+        android:layout_marginLeft="8dp"
         android:layout_gravity="center_vertical"
         android:id="@+id/list_item_artist_imageview"/>
 
     <TextView
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-
         android:layout_marginLeft="16dp"
         android:gravity="center_vertical"
         android:id="@+id/list_item_artist_textview"/>

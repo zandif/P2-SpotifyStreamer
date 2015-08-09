@@ -3,6 +3,7 @@ package net.vectortime.p2_spotifystreamer;
 import android.content.Intent;
 import android.support.v7.app.ActionBarActivity;
 import android.os.Bundle;
+import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -10,7 +11,7 @@ import android.view.View;
 import android.widget.ImageButton;
 
 
-public class TrackPlayerActivity extends ActionBarActivity {
+public class TrackPlayerActivity extends AppCompatActivity {
     private final String LOG_TAG = TrackPlayerActivity.class.getSimpleName();
 
     @Override

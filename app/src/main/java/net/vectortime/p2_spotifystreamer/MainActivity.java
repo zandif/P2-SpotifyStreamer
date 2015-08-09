@@ -1,16 +1,32 @@
 package net.vectortime.p2_spotifystreamer;
 
-import android.support.v7.app.ActionBarActivity;
+import android.content.Intent;
 import android.os.Bundle;
+import android.support.v7.app.AppCompatActivity;
 import android.view.Menu;
 import android.view.MenuItem;
 
-public class MainActivity extends ActionBarActivity {
+import net.vectortime.p2_spotifystreamer.dataClasses.ArtistInfo;
+
+public class MainActivity extends AppCompatActivity implements MainActivityFragment.Callback {
+
+    private boolean mTwoPane;
+    private static final String TOPTRACKS_TAG = "TTTAG";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
+        if (findViewById(R.id.toptracks_fragment) != null) {
+            mTwoPane = true;
+            if (savedInstanceState == null) {
+                getFragmentManager().beginTransaction().replace(R.id.toptracks_fragment,
+                        new TopTracksActivityFragment()).commit();
+            } else {
+                mTwoPane = false;
+            }
+        }
     }
 
     @Override
@@ -33,5 +49,33 @@ public class MainActivity extends ActionBarActivity {
         }
 
         return super.onOptionsItemSelected(item);
+    }
+
+    @Override
+    public void onItemSelected(ArtistInfo info) {
+        if (mTwoPane) {
+            Bundle args = new Bundle();
+            // Put stuff in bundle
+            args.putString(TopTracksActivityFragment.ARTIST_ID_KEY,info.artistId);
+            args.putString(TopTracksActivityFragment.ARTIST_NAME_KEY,info.artistName);
+            args.putString(TopTracksActivityFragment.ARTIST_ICON_KEY,info.getLargestImage());
+            getSupportActionBar().setSubtitle(info.artistName);
+
+            //Make new fragment
+            TopTracksActivityFragment fragment = new TopTracksActivityFragment();
+            //Pass in bundle
+            fragment.setArguments(args);
+
+            getFragmentManager().beginTransaction().replace(R.id.toptracks_fragment,
+                    fragment, TOPTRACKS_TAG).commit();
+
+        } else {
+            // Explicit intent to launch the detail activity
+            Intent topTracksIntent = new Intent(this, TopTracksActivity.class);
+            topTracksIntent.putExtra(Intent.EXTRA_TEXT, info.artistName);
+            topTracksIntent.putExtra(Intent.EXTRA_SHORTCUT_ICON, info.getLargestImage());
+            topTracksIntent.putExtra(Intent.EXTRA_UID, info.artistId);
+            startActivity(topTracksIntent);
+        }
     }
 }
