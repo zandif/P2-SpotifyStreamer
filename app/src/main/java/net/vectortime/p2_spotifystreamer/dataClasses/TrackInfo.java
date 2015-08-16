@@ -16,7 +16,7 @@ public class TrackInfo implements Parcelable {
     public String songId;
     public String songTitle;
     public String songPreview;
-    public long songDuration;
+    public long songDuration = 30000;
     public int songRank;
     public String ablumId;
     public List<ImageParcel> images;
