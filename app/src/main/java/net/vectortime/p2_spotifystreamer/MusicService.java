@@ -43,6 +43,9 @@ public class MusicService extends Service implements MediaPlayer.OnPreparedListe
     MediaPlayer mediaPlayer;
     MusicCallback mCallback;
     Messenger mMessenger;
+
+    int startingPosition;
+
 //    String url = "https://p.scdn.co/mp3-preview/889f0af9e390ff0c1c17eafa6eaa7f41409a0016";
     String url;
     ArrayList<String> urls;
@@ -103,12 +106,14 @@ public class MusicService extends Service implements MediaPlayer.OnPreparedListe
             mediaPlayer.release();
             mediaPlayer = null;
         }
+        unloadTrack();
     }
 
     @Override
     public boolean onError(MediaPlayer mp, int what, int extra) {
         Log.d(LOG_TAG, "onError");
         mp.reset();
+        unloadTrack();
         return false;
     }
 
@@ -129,11 +134,13 @@ public class MusicService extends Service implements MediaPlayer.OnPreparedListe
                 }
             }
 
-            Log.d(LOG_TAG, "onStartCommand - intent not null");
+//            Log.d(LOG_TAG, "onStartCommand - intent not null");
             url = intent.getStringExtra(TRACK_URL);
             urls = intent.getStringArrayListExtra(URLS);
+            startingPosition = intent.getIntExtra(TRACK_POSTION,0);
             mMessenger = (Messenger) intent.getExtras().get(MESSENGER);
-            Log.d(LOG_TAG, "onHandleIntent - URLS found: "+ urls.size());
+            Log.d(LOG_TAG, "onHandleIntent - URLS found: "+ urls.size() + "(" + url + ") and " +
+                    "starting at "+ startingPosition);
             init();
             mediaPlayer.prepareAsync(); // prepare async to not block main thread
         }
@@ -151,6 +158,11 @@ public class MusicService extends Service implements MediaPlayer.OnPreparedListe
     @Override
     public void onPrepared(MediaPlayer mp) {
         Log.d(LOG_TAG, "onPrepared");
+        if (startingPosition != 0) {
+            Log.d(LOG_TAG, "onPrepared - starting at " + startingPosition);
+            seekTo(startingPosition);
+            startingPosition = 0;
+        }
         mp.start();
         mUpdateProgressTask.run();
     }
@@ -185,12 +197,46 @@ public class MusicService extends Service implements MediaPlayer.OnPreparedListe
                     e.printStackTrace();
                 }
             }
+        } else {
+            mediaPlayer.reset();
+
+            if (url != null) {
+                try {
+                    Log.d(LOG_TAG, "init - set url to " + url);
+                    mediaPlayer.setDataSource(url);
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
         }
     }
 
     public void setUrl(String inUrl) {
         Log.d(LOG_TAG, "setUrl: "+ inUrl);
         url = inUrl;
+    }
+
+    public void seekTo(int progress) {
+        if (mediaPlayer != null)
+            mediaPlayer.seekTo(progress);
+    }
+
+    public void playPause(View view) {
+        ImageButton button = (ImageButton) view;
+        String buttonText = (String) button.getContentDescription();
+        Log.i(LOG_TAG, "Button: " + buttonText);
+
+        if (buttonText.equals(getString(R.string.track_player_play)) && mediaPlayer != null) {
+            // Track is paused
+            mediaPlayer.start();
+        } else if (buttonText.equals(getString(R.string.track_player_play))) {
+            // Track finished and mediaplayer was released
+            init();
+            mediaPlayer.prepareAsync();
+        } else {
+            // Track is playing
+            mediaPlayer.pause();
+        }
     }
 
     public void changeSong(View view) {
@@ -207,22 +253,48 @@ public class MusicService extends Service implements MediaPlayer.OnPreparedListe
                 else next = urls.get(0);
                 break;
             }
-            previous = urls.get(urls.size()-1);
+            previous = urls.get(i);
         }
 
         String changeToTrack = next;
-
-        if (buttonText.equals(R.string.track_player_previous)) {
+        if (buttonText.equals(getString(R.string.track_player_previous))) {
             changeToTrack = previous;
         }
 
-        loadTrack(url);
+        loadTrack(changeToTrack);
     }
 
-    private void loadTrack(String url) {
-        if (mediaPlayer == null) init();
-        mediaPlayer.reset();
+    private void loadTrack(String inUrl) {
+        url = inUrl;
+        Log.d(LOG_TAG, "loadTrack - New track: " + url);
 
+        init();
+
+        try {
+            Message msg = Message.obtain();
+            Bundle newSong = new Bundle();
+            newSong.putString(TRACK_SELECTION, url);
+            msg.setData(newSong);
+            mMessenger.send(msg);;
+        }
+        catch (android.os.RemoteException e1) {
+            Log.w(LOG_TAG, "Exception sending message", e1);
+        }
+
+        mediaPlayer.prepareAsync();
+    }
+
+    private void unloadTrack() {
+        try {
+            Message msg = Message.obtain();
+            Bundle newSong = new Bundle();
+            newSong.putString(TRACK_SELECTION, "");
+            msg.setData(newSong);
+            mMessenger.send(msg);;
+        }
+        catch (android.os.RemoteException e1) {
+            Log.w(LOG_TAG, "Exception sending message", e1);
+        }
     }
 
     @Nullable

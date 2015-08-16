@@ -95,10 +95,10 @@
                 android:id="@+id/track_play_button_playpause"
                 android:layout_width="80dp"
                 android:layout_height="80dp"
-                android:contentDescription="@string/track_player_play"
+                android:contentDescription="@string/track_player_pause"
                 android:layout_marginLeft="@dimen/abc_button_padding_horizontal_material"
                 android:layout_marginRight="@dimen/abc_button_padding_horizontal_material"
-                android:src="@android:drawable/ic_media_play"/>
+                android:src="@android:drawable/ic_media_pause"/>
 
             <ImageButton
                 android:id="@+id/track_play_button_next"

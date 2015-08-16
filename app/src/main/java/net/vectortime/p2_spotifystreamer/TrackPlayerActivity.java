@@ -28,7 +28,7 @@ public class TrackPlayerActivity extends AppCompatActivity {
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         // Inflate the menu; this adds items to the action bar if it is present.
-        getMenuInflater().inflate(R.menu.menu_track_player, menu);
+//        getMenuInflater().inflate(R.menu.menu_track_player, menu);
         return true;
     }
 
@@ -47,12 +47,4 @@ public class TrackPlayerActivity extends AppCompatActivity {
         return super.onOptionsItemSelected(item);
     }
 
-    public void changeSong(View view) {
-        ImageButton button = (ImageButton) view;
-
-        String buttonText = (String) button.getContentDescription();
-
-        Log.i(LOG_TAG, "Button: " + buttonText);
-
-    }
 }

@@ -3,7 +3,6 @@ package net.vectortime.p2_spotifystreamer;
 import android.app.Dialog;
 
 import android.app.DialogFragment;
-import android.app.Fragment;
 import android.app.LoaderManager;
 import android.content.ComponentName;
 import android.content.CursorLoader;
@@ -23,7 +22,6 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.Window;
-import android.widget.Button;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.SeekBar;
@@ -34,9 +32,9 @@ import com.squareup.picasso.Picasso;
 import net.vectortime.p2_spotifystreamer.dataClasses.TrackInfo;
 import net.vectortime.p2_spotifystreamer.database.MusicContract;
 
+import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.TimeUnit;
 
 
 /**
@@ -48,6 +46,7 @@ public class TrackPlayerActivityFragment extends DialogFragment implements Loade
 
     private int mSongRank;
     private String mArtistId;
+    private int mLastKnownPosition;
 
     private List<TrackInfo> mTracks;
 
@@ -82,6 +81,9 @@ public class TrackPlayerActivityFragment extends DialogFragment implements Loade
 
     static final String ARTIST_KEY = "artist_key";
     static final String RANK_KEY = "rank_key";
+    static final String POSITION_KEY = "position_key";
+    String PAUSE_STRING;
+    String PLAY_STRING;
 
     TextView mArtistText;
     TextView mAlbumText;
@@ -90,11 +92,21 @@ public class TrackPlayerActivityFragment extends DialogFragment implements Loade
     TextView mDuration;
     TextView mCurrentTime;
     SeekBar mSeekBar;
+    ImageButton mPlaypause;
 
     MusicService mService;
     boolean mBound = false;
 
     public TrackPlayerActivityFragment() {
+    }
+
+    @Override
+    public void onSaveInstanceState(Bundle outState) {
+        Log.d(LOG_TAG, "onSaveInstanceState - saving position @ " + mLastKnownPosition + " & " +
+                "rank @ " + mSongRank);
+        outState.putInt(POSITION_KEY, mLastKnownPosition);
+        outState.putInt(RANK_KEY, mSongRank);
+        super.onSaveInstanceState(outState);
     }
 
     @Override
@@ -111,21 +123,22 @@ public class TrackPlayerActivityFragment extends DialogFragment implements Loade
         mCurrentTime = (TextView) rootView.findViewById(R.id.track_play_current_time);
         mSeekBar = (SeekBar) rootView.findViewById(R.id.track_play_seekBar);
 
+        PAUSE_STRING = getString(R.string.track_player_pause);
+        PLAY_STRING = getString(R.string.track_player_play);
+
         ImageButton prev = (ImageButton) rootView.findViewById(R.id.track_play_button_previous);
         ImageButton next = (ImageButton) rootView.findViewById(R.id.track_play_button_next);
+        mPlaypause = (ImageButton) rootView.findViewById(R.id.track_play_button_playpause);
 
-        next.setOnClickListener(new View.OnClickListener(){
+        prev.setOnClickListener(new View.OnClickListener(){
             @Override
             public void onClick(View v) {
-                if (mService != null) {
-                    mService.changeSong(v);
-                    Log.d(LOG_TAG, "Previous clicked - Previous onClickListener is set");
-                }
+                if (mService != null) mService.changeSong(v);
                 else Log.w(LOG_TAG, "Previous clicked - Service not started yet");
             }
         });
 
-        prev.setOnClickListener(new View.OnClickListener(){
+        next.setOnClickListener(new View.OnClickListener(){
             @Override
             public void onClick(View v) {
                 if (mService != null) mService.changeSong(v);
@@ -133,7 +146,62 @@ public class TrackPlayerActivityFragment extends DialogFragment implements Loade
             }
         });
 
+        mPlaypause.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if (mService != null) {
+                    mService.playPause(v);
+                    if (mPlaypause.getContentDescription().equals(PLAY_STRING)) {
+                        mPlaypause.setContentDescription(PAUSE_STRING);
+                        mPlaypause.setImageResource(getResources().getIdentifier
+                                ("@android:drawable/ic_media_pause", null, null));
+                    } else {
+                        mPlaypause.setContentDescription(PLAY_STRING);
+                        mPlaypause.setImageResource(getResources().getIdentifier
+                                ("@android:drawable/ic_media_play", null, null));
+                    }
+                }
+            }
+        });
+
+        mSeekBar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+            @Override
+            public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
+                if (mService != null && fromUser) mService.seekTo(progress);
+            }
+
+            @Override
+            public void onStartTrackingTouch(SeekBar seekBar) {
+
+            }
+
+            @Override
+            public void onStopTrackingTouch(SeekBar seekBar) {
+
+            }
+        });
+
+        if (savedInstanceState == null || !savedInstanceState.containsKey(POSITION_KEY)) {
+            Log.d(LOG_TAG, "onCreateView - no previous last known position");
+            mLastKnownPosition = 0;
+        } else {
+            mLastKnownPosition = savedInstanceState.getInt(POSITION_KEY);
+            Log.d(LOG_TAG, "onCreateView - restoring last known position: "+ mLastKnownPosition);
+        }
+
+        if (savedInstanceState != null && savedInstanceState.containsKey(RANK_KEY)) {
+            mSongRank = savedInstanceState.getInt(RANK_KEY);
+            Log.d(LOG_TAG, "onCreateView - restoring last known rank: "+ mSongRank);
+        }
         return rootView;
+    }
+
+    @Override
+    public void onDestroyView() {
+        if (mService != null)
+            getActivity().unbindService(mConnection);
+
+        super.onDestroyView();
     }
 
     @Override
@@ -149,9 +217,14 @@ public class TrackPlayerActivityFragment extends DialogFragment implements Loade
         mAlbumText.setText(info.albumTitle);
         mSongText.setText(info.songTitle);
         long time = info.songDuration;
-        mSeekBar.setMax((int)time);
+        mSeekBar.setMax((int) time);
+        if (mLastKnownPosition != 0)
+            mSeekBar.setProgress(mLastKnownPosition);
         mDuration.setText(formatTime(time));
         mCurrentTime.setText(formatTime(0));
+        mPlaypause.setContentDescription(PAUSE_STRING);
+        mPlaypause.setImageResource(getResources().getIdentifier
+                ("@android:drawable/ic_media_pause", null, null));
         Picasso.with(getActivity()).load(info.getLargestImage()).into(mAlbumArt);
     }
 
@@ -187,13 +260,14 @@ public class TrackPlayerActivityFragment extends DialogFragment implements Loade
             mArtistId = arguments.getString(ARTIST_KEY);
             mSongRank = arguments.getInt(RANK_KEY);
         }
+        Log.v(LOG_TAG, "In onCreateLoader artist: " + mArtistId + " rank: " + mSongRank);
         Uri myUri = MusicContract.TrackEntry.buildTrackByArtist(mArtistId);
         return new CursorLoader(getActivity(),myUri,PLAYER_COLUMNS,null,null,null);
     }
 
     @Override
     public void onLoadFinished(Loader<Cursor> loader, Cursor cur) {
-        Log.v(LOG_TAG, "In onLoadFinished");
+        Log.v(LOG_TAG, "In onLoadFinished - mSongRank = " + mSongRank);
         cur.moveToFirst();
         mTracks = new ArrayList<TrackInfo>();
         ArrayList<String> urls = new ArrayList<>();
@@ -234,26 +308,63 @@ public class TrackPlayerActivityFragment extends DialogFragment implements Loade
         Intent sendIntent = new Intent(getActivity(), MusicService.class);
         sendIntent.putExtra(MusicService.TRACK_URL, startingUrl);
         sendIntent.putStringArrayListExtra(MusicService.URLS, urls);
-        sendIntent.putExtra(MusicService.MESSENGER, new Messenger(handler));
+        sendIntent.putExtra(MusicService.TRACK_POSTION, mLastKnownPosition);
+        sendIntent.putExtra(MusicService.MESSENGER, new Messenger(new HandlerClass(this)));
         getActivity().startService(sendIntent);
         getActivity().bindService(sendIntent, mConnection, getActivity().BIND_AUTO_CREATE);
     }
 
-    private Handler handler = new Handler(){
+    private static class HandlerClass extends Handler{
+        private final WeakReference<TrackPlayerActivityFragment> mTarget;
+
+        public HandlerClass(TrackPlayerActivityFragment target){
+            mTarget = new WeakReference<TrackPlayerActivityFragment>(target);
+        }
+
         @Override
         public void handleMessage(Message msg) {
 //            Log.d("handler", "Received message!");
             Bundle info = msg.getData();
-            if (info != null){
+            TrackPlayerActivityFragment target = mTarget.get();
+            if (info != null && target!= null){
                 if(info.containsKey(MusicService.TRACK_POSTION))
-                    updateSeekBar(info.getInt(MusicService.TRACK_POSTION));
+                    target.updateSeekBar(info.getInt(MusicService.TRACK_POSTION));
+                else {
+                    Log.d("handler", "Received message - not a position update though...");
+                }
 
                 if(info.containsKey(MusicService.TRACK_SELECTION))
-                    changeSongInfo(info.getString(MusicService.TRACK_SELECTION));
+                    target.changeSongInfo(info.getString(MusicService.TRACK_SELECTION));
             }
             super.handleMessage(msg);
         }
-    };
+    }
+
+//     private static Handler handler = new Handler(){
+//        private final WeakReference<TrackPlayerActivityFragment> mTarget;
+//
+//        public Handler(TrackPlayerActivityFragment target){
+//            mTarget = new WeakReference<TrackPlayerActivityFragment>(target);
+//        }
+//
+//        @Override
+//        public void handleMessage(Message msg) {
+////            Log.d("handler", "Received message!");
+//            Bundle info = msg.getData();
+//            TrackPlayerActivityFragment target = mTarget.get();
+//            if (info != null && target!= null){
+//                if(info.containsKey(MusicService.TRACK_POSTION))
+//                    target.updateSeekBar(info.getInt(MusicService.TRACK_POSTION));
+//                else {
+//                    Log.d("handler", "Received message - not a position update though...");
+//                }
+//
+//                if(info.containsKey(MusicService.TRACK_SELECTION))
+//                    target.changeSongInfo(info.getString(MusicService.TRACK_SELECTION));
+//            }
+//            super.handleMessage(msg);
+//        }
+//    };
 
     @Override
     public void onLoaderReset(Loader<Cursor> loader) {    }
@@ -262,13 +373,28 @@ public class TrackPlayerActivityFragment extends DialogFragment implements Loade
     public void updateSeekBar(int currentTime) {
         mSeekBar.setProgress(currentTime);
         mCurrentTime.setText(formatTime(currentTime));
+        mLastKnownPosition = currentTime;
     }
 
     @Override
     public void changeSongInfo(String url) {
+        Log.d(LOG_TAG, "changeSongInfo to " + url);
+
+        mLastKnownPosition = 0;
+        mSeekBar.setProgress(0);
+        if (url.equals("")) {
+            mCurrentTime.setText(formatTime(0));
+            mPlaypause.setContentDescription(PLAY_STRING);
+            if (isAdded())
+                mPlaypause.setImageResource(getResources().getIdentifier
+                    ("@android:drawable/ic_media_play", null, null));
+            return;
+        }
+
         for (int i = 0; i < mTracks.size(); i++){
-            if (mTracks.get(i).songPreview == url) {
+            if (mTracks.get(i).songPreview.equals(url)) {
                 populateFields(mTracks.get(i));
+                mSongRank = mTracks.get(i).songRank;
                 break;
             }
         }
