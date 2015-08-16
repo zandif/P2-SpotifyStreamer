@@ -1,7 +1,6 @@
 package net.vectortime.p2_spotifystreamer;
 
 import android.content.Context;
-import android.content.Intent;
 import android.os.AsyncTask;
 import android.app.Fragment;
 import android.os.Bundle;
@@ -29,7 +28,6 @@ import java.util.List;
 import kaaes.spotify.webapi.android.SpotifyApi;
 import kaaes.spotify.webapi.android.models.Artist;
 import kaaes.spotify.webapi.android.models.ArtistsPager;
-import kaaes.spotify.webapi.android.models.Image;
 
 /**
  * A placeholder fragment containing a simple view.

@@ -1,11 +1,9 @@
 package net.vectortime.p2_spotifystreamer;
 
-import android.app.IntentService;
 import android.app.Service;
 import android.content.Intent;
 import android.media.AudioManager;
 import android.media.MediaPlayer;
-import android.media.session.PlaybackState;
 import android.os.Binder;
 import android.os.Bundle;
 import android.os.Handler;
@@ -20,35 +18,27 @@ import android.widget.ImageButton;
 import java.io.IOException;
 import java.util.ArrayList;
 
-import static android.view.View.INVISIBLE;
-import static android.view.View.VISIBLE;
-
 /**
  * Created by Kevin on 8/15/2015.
  */
 public class MusicService extends Service implements MediaPlayer.OnPreparedListener,
         MediaPlayer.OnErrorListener, MediaPlayer.OnCompletionListener {
     private static final String LOG_TAG = MusicService.class.getSimpleName();
-    private static final String ACTION_PLAY = "net.vectortime.p2_spotifystreamer.PLAY";
-    public static final String CMD_NAME = "CMD_NAME";
-    public static final String CMD_PAUSE = "CMD_PAUSE";
+
     public static final String TRACK_URL = "TRACK_URL";
     public static final String URLS = "URLS";;
     public static final String MESSENGER = "MESSENGER";
-    public static final String TRACK_POSTION = "TRACK_POS";
+    public static final String TRACK_POSITION = "TRACK_POS";
     public static final String TRACK_SELECTION = "TRACK_SEL";
 
     private final IBinder mBinder = new LocalBinder();
 
-    MediaPlayer mediaPlayer;
-    MusicCallback mCallback;
-    Messenger mMessenger;
+    private MediaPlayer mediaPlayer;
+    private Messenger mMessenger;
+    private int startingPosition;
 
-    int startingPosition;
-
-//    String url = "https://p.scdn.co/mp3-preview/889f0af9e390ff0c1c17eafa6eaa7f41409a0016";
-    String url;
-    ArrayList<String> urls;
+    private String url;
+    private ArrayList<String> urls;
 
     private final Runnable mUpdateProgressTask = new Runnable() {
         @Override
@@ -59,13 +49,12 @@ public class MusicService extends Service implements MediaPlayer.OnPreparedListe
 
     private void updateProgress() {
         if (mediaPlayer != null) {
-//            mCallback.updateSeekBar(mediaPlayer.getCurrentPosition());
 //            Log.d(LOG_TAG, "updateProgress - " + mediaPlayer.getCurrentPosition());
 
             try {
                 Message msg = Message.obtain();
                 Bundle bundle  = new Bundle();
-                bundle.putInt(TRACK_POSTION, mediaPlayer.getCurrentPosition());
+                bundle.putInt(TRACK_POSITION, mediaPlayer.getCurrentPosition());
                 msg.setData(bundle);
                 mMessenger.send(msg);
             }
@@ -84,24 +73,11 @@ public class MusicService extends Service implements MediaPlayer.OnPreparedListe
         }
     }
 
-//    public MusicService() {
-//        super("Music");
-//    }
-
     public MusicService() {}
-
-//    /**
-//     * Creates an IntentService.  Invoked by your subclass's constructor.
-//     *
-//     * @param name Used to name the worker thread, important only for debugging.
-//     */
-//    public MusicService(String name) {
-//        super(name);
-//    }
 
     @Override
     public void onCompletion(MediaPlayer mp) {
-        Log.d(LOG_TAG, "onCompletion");
+//        Log.d(LOG_TAG, "onCompletion");
         if (mediaPlayer != null) {
             mediaPlayer.release();
             mediaPlayer = null;
@@ -111,7 +87,7 @@ public class MusicService extends Service implements MediaPlayer.OnPreparedListe
 
     @Override
     public boolean onError(MediaPlayer mp, int what, int extra) {
-        Log.d(LOG_TAG, "onError");
+//        Log.d(LOG_TAG, "onError");
         mp.reset();
         unloadTrack();
         return false;
@@ -119,47 +95,27 @@ public class MusicService extends Service implements MediaPlayer.OnPreparedListe
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
-        Log.d(LOG_TAG, "onStartCommand " + flags + " " + startId);
+//        Log.d(LOG_TAG, "onStartCommand " + flags + " " + startId);
 
         if (intent != null) {
-            String action = intent.getAction();
-            String command = intent.getStringExtra(CMD_NAME);
-            if (ACTION_PLAY.equals(action)) {
-                if (CMD_PAUSE.equals(command)) {
-//                    if (mPlayback != null && mPlayback.isPlaying()) {
-//                        handlePauseRequest();
-//                    }
-//                } else if (CMD_STOP_CASTING.equals(command)) {
-//                    mCastManager.disconnect();
-                }
-            }
-
 //            Log.d(LOG_TAG, "onStartCommand - intent not null");
             url = intent.getStringExtra(TRACK_URL);
             urls = intent.getStringArrayListExtra(URLS);
-            startingPosition = intent.getIntExtra(TRACK_POSTION,0);
+            startingPosition = intent.getIntExtra(TRACK_POSITION,0);
             mMessenger = (Messenger) intent.getExtras().get(MESSENGER);
-            Log.d(LOG_TAG, "onHandleIntent - URLS found: "+ urls.size() + "(" + url + ") and " +
-                    "starting at "+ startingPosition);
+//            Log.d(LOG_TAG, "onHandleIntent - URLS found: "+ urls.size() + "(" + url + ") and " +
+//                    "starting at "+ startingPosition);
             init();
             mediaPlayer.prepareAsync(); // prepare async to not block main thread
-        }
-
-        if (intent != null &&
-                intent.getAction() != null &&
-                intent.getAction().equals(ACTION_PLAY)) {
-            //init();
-            //mediaPlayer.prepareAsync();
-
         }
         return super.onStartCommand(intent, flags, startId);
     }
 
     @Override
     public void onPrepared(MediaPlayer mp) {
-        Log.d(LOG_TAG, "onPrepared");
+//        Log.d(LOG_TAG, "onPrepared");
         if (startingPosition != 0) {
-            Log.d(LOG_TAG, "onPrepared - starting at " + startingPosition);
+//            Log.d(LOG_TAG, "onPrepared - starting at " + startingPosition);
             seekTo(startingPosition);
             startingPosition = 0;
         }
@@ -169,19 +125,19 @@ public class MusicService extends Service implements MediaPlayer.OnPreparedListe
 
     @Override
     public void onDestroy() {
-        Log.d(LOG_TAG, "onDestroy");
+//        Log.d(LOG_TAG, "onDestroy");
         if (mediaPlayer != null) mediaPlayer.release();
         super.onDestroy();
     }
 
     @Override
     public void onCreate() {
-        Log.d(LOG_TAG, "onCreate");
+//        Log.d(LOG_TAG, "onCreate");
         super.onCreate();
     }
 
     private void init() {
-        Log.d(LOG_TAG, "init");
+//        Log.d(LOG_TAG, "init");
         if (mediaPlayer == null) {
             mediaPlayer = new MediaPlayer();
             mediaPlayer.setOnPreparedListener(this);
@@ -191,7 +147,7 @@ public class MusicService extends Service implements MediaPlayer.OnPreparedListe
 
             if (url != null) {
                 try {
-                    Log.d(LOG_TAG, "init - set url to " + url);
+//                    Log.d(LOG_TAG, "init - set url to " + url);
                     mediaPlayer.setDataSource(url);
                 } catch (IOException e) {
                     e.printStackTrace();
@@ -202,18 +158,13 @@ public class MusicService extends Service implements MediaPlayer.OnPreparedListe
 
             if (url != null) {
                 try {
-                    Log.d(LOG_TAG, "init - set url to " + url);
+//                    Log.d(LOG_TAG, "init - set url to " + url);
                     mediaPlayer.setDataSource(url);
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
             }
         }
-    }
-
-    public void setUrl(String inUrl) {
-        Log.d(LOG_TAG, "setUrl: "+ inUrl);
-        url = inUrl;
     }
 
     public void seekTo(int progress) {
@@ -224,7 +175,7 @@ public class MusicService extends Service implements MediaPlayer.OnPreparedListe
     public void playPause(View view) {
         ImageButton button = (ImageButton) view;
         String buttonText = (String) button.getContentDescription();
-        Log.i(LOG_TAG, "Button: " + buttonText);
+//        Log.i(LOG_TAG, "Button: " + buttonText);
 
         if (buttonText.equals(getString(R.string.track_player_play)) && mediaPlayer != null) {
             // Track is paused
@@ -243,7 +194,7 @@ public class MusicService extends Service implements MediaPlayer.OnPreparedListe
         ImageButton button = (ImageButton) view;
         String buttonText = (String) button.getContentDescription();
 
-        Log.i(LOG_TAG, "Button: " + buttonText);
+//        Log.i(LOG_TAG, "Button: " + buttonText);
 
         String previous = urls.get(urls.size()-1);
         String next = "";
@@ -266,7 +217,7 @@ public class MusicService extends Service implements MediaPlayer.OnPreparedListe
 
     private void loadTrack(String inUrl) {
         url = inUrl;
-        Log.d(LOG_TAG, "loadTrack - New track: " + url);
+//        Log.d(LOG_TAG, "loadTrack - New track: " + url);
 
         init();
 
@@ -300,16 +251,7 @@ public class MusicService extends Service implements MediaPlayer.OnPreparedListe
     @Nullable
     @Override
     public IBinder onBind(Intent intent) {
-        Log.d(LOG_TAG, "onBind");
+//        Log.d(LOG_TAG, "onBind");
         return mBinder;
-    }
-
-    public void setCallback(MusicCallback callback) {
-        mCallback = callback;
-    }
-
-    public interface MusicCallback {
-        void updateSeekBar(int currentTime);
-        void changeSongInfo(String url);
     }
 }

@@ -41,7 +41,7 @@ import java.util.List;
  * A placeholder fragment containing a simple view.
  */
 public class TrackPlayerActivityFragment extends DialogFragment implements LoaderManager
-        .LoaderCallbacks<Cursor>, MusicService.MusicCallback {
+        .LoaderCallbacks<Cursor> {
     private final String LOG_TAG = TrackPlayerActivityFragment.class.getSimpleName();
 
     private int mSongRank;
@@ -102,8 +102,8 @@ public class TrackPlayerActivityFragment extends DialogFragment implements Loade
 
     @Override
     public void onSaveInstanceState(Bundle outState) {
-        Log.d(LOG_TAG, "onSaveInstanceState - saving position @ " + mLastKnownPosition + " & " +
-                "rank @ " + mSongRank);
+//        Log.d(LOG_TAG, "onSaveInstanceState - saving position @ " + mLastKnownPosition + " & " +
+//                "rank @ " + mSongRank);
         outState.putInt(POSITION_KEY, mLastKnownPosition);
         outState.putInt(RANK_KEY, mSongRank);
         super.onSaveInstanceState(outState);
@@ -112,7 +112,7 @@ public class TrackPlayerActivityFragment extends DialogFragment implements Loade
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
-        Log.v(LOG_TAG, "In onCreateView");
+//        Log.v(LOG_TAG, "In onCreateView");
         View rootView = inflater.inflate(R.layout.fragment_track_player, container, false);
 
         mArtistText = (TextView) rootView.findViewById(R.id.track_play_artist);
@@ -182,16 +182,16 @@ public class TrackPlayerActivityFragment extends DialogFragment implements Loade
         });
 
         if (savedInstanceState == null || !savedInstanceState.containsKey(POSITION_KEY)) {
-            Log.d(LOG_TAG, "onCreateView - no previous last known position");
+//            Log.d(LOG_TAG, "onCreateView - no previous last known position");
             mLastKnownPosition = 0;
         } else {
             mLastKnownPosition = savedInstanceState.getInt(POSITION_KEY);
-            Log.d(LOG_TAG, "onCreateView - restoring last known position: "+ mLastKnownPosition);
+//            Log.d(LOG_TAG, "onCreateView - restoring last known position: "+ mLastKnownPosition);
         }
 
         if (savedInstanceState != null && savedInstanceState.containsKey(RANK_KEY)) {
             mSongRank = savedInstanceState.getInt(RANK_KEY);
-            Log.d(LOG_TAG, "onCreateView - restoring last known rank: "+ mSongRank);
+//            Log.d(LOG_TAG, "onCreateView - restoring last known rank: "+ mSongRank);
         }
         return rootView;
     }
@@ -206,7 +206,7 @@ public class TrackPlayerActivityFragment extends DialogFragment implements Loade
 
     @Override
     public Dialog onCreateDialog(Bundle savedInstanceState) {
-        Log.d(LOG_TAG, "In onCreateDialog");
+//        Log.d(LOG_TAG, "In onCreateDialog");
         Dialog dialog = super.onCreateDialog(savedInstanceState);
         dialog.requestWindowFeature(Window.FEATURE_NO_TITLE);
         return dialog;
@@ -242,7 +242,7 @@ public class TrackPlayerActivityFragment extends DialogFragment implements Loade
 
     @Override
     public Loader<Cursor> onCreateLoader(int id, Bundle args) {
-        Log.v(LOG_TAG, "In onCreateLoader");
+//        Log.v(LOG_TAG, "In onCreateLoader");
         Intent intent = getActivity().getIntent();
         Bundle arguments = getArguments();
         if (intent != null && intent.hasExtra(Intent.EXTRA_TEXT)) {
@@ -260,14 +260,14 @@ public class TrackPlayerActivityFragment extends DialogFragment implements Loade
             mArtistId = arguments.getString(ARTIST_KEY);
             mSongRank = arguments.getInt(RANK_KEY);
         }
-        Log.v(LOG_TAG, "In onCreateLoader artist: " + mArtistId + " rank: " + mSongRank);
+//        Log.v(LOG_TAG, "In onCreateLoader artist: " + mArtistId + " rank: " + mSongRank);
         Uri myUri = MusicContract.TrackEntry.buildTrackByArtist(mArtistId);
         return new CursorLoader(getActivity(),myUri,PLAYER_COLUMNS,null,null,null);
     }
 
     @Override
     public void onLoadFinished(Loader<Cursor> loader, Cursor cur) {
-        Log.v(LOG_TAG, "In onLoadFinished - mSongRank = " + mSongRank);
+//        Log.v(LOG_TAG, "In onLoadFinished - mSongRank = " + mSongRank);
         cur.moveToFirst();
         mTracks = new ArrayList<TrackInfo>();
         ArrayList<String> urls = new ArrayList<>();
@@ -304,11 +304,11 @@ public class TrackPlayerActivityFragment extends DialogFragment implements Loade
 
         } while (cur.moveToNext());
 
-        Log.d(LOG_TAG, "Starting service");
+//        Log.d(LOG_TAG, "Starting service");
         Intent sendIntent = new Intent(getActivity(), MusicService.class);
         sendIntent.putExtra(MusicService.TRACK_URL, startingUrl);
         sendIntent.putStringArrayListExtra(MusicService.URLS, urls);
-        sendIntent.putExtra(MusicService.TRACK_POSTION, mLastKnownPosition);
+        sendIntent.putExtra(MusicService.TRACK_POSITION, mLastKnownPosition);
         sendIntent.putExtra(MusicService.MESSENGER, new Messenger(new HandlerClass(this)));
         getActivity().startService(sendIntent);
         getActivity().bindService(sendIntent, mConnection, getActivity().BIND_AUTO_CREATE);
@@ -327,11 +327,11 @@ public class TrackPlayerActivityFragment extends DialogFragment implements Loade
             Bundle info = msg.getData();
             TrackPlayerActivityFragment target = mTarget.get();
             if (info != null && target!= null){
-                if(info.containsKey(MusicService.TRACK_POSTION))
-                    target.updateSeekBar(info.getInt(MusicService.TRACK_POSTION));
-                else {
-                    Log.d("handler", "Received message - not a position update though...");
-                }
+                if(info.containsKey(MusicService.TRACK_POSITION))
+                    target.updateSeekBar(info.getInt(MusicService.TRACK_POSITION));
+//                else {
+//                    Log.d("handler", "Received message - not a position update though...");
+//                }
 
                 if(info.containsKey(MusicService.TRACK_SELECTION))
                     target.changeSongInfo(info.getString(MusicService.TRACK_SELECTION));
@@ -340,45 +340,17 @@ public class TrackPlayerActivityFragment extends DialogFragment implements Loade
         }
     }
 
-//     private static Handler handler = new Handler(){
-//        private final WeakReference<TrackPlayerActivityFragment> mTarget;
-//
-//        public Handler(TrackPlayerActivityFragment target){
-//            mTarget = new WeakReference<TrackPlayerActivityFragment>(target);
-//        }
-//
-//        @Override
-//        public void handleMessage(Message msg) {
-////            Log.d("handler", "Received message!");
-//            Bundle info = msg.getData();
-//            TrackPlayerActivityFragment target = mTarget.get();
-//            if (info != null && target!= null){
-//                if(info.containsKey(MusicService.TRACK_POSTION))
-//                    target.updateSeekBar(info.getInt(MusicService.TRACK_POSTION));
-//                else {
-//                    Log.d("handler", "Received message - not a position update though...");
-//                }
-//
-//                if(info.containsKey(MusicService.TRACK_SELECTION))
-//                    target.changeSongInfo(info.getString(MusicService.TRACK_SELECTION));
-//            }
-//            super.handleMessage(msg);
-//        }
-//    };
-
     @Override
     public void onLoaderReset(Loader<Cursor> loader) {    }
 
-    @Override
     public void updateSeekBar(int currentTime) {
         mSeekBar.setProgress(currentTime);
         mCurrentTime.setText(formatTime(currentTime));
         mLastKnownPosition = currentTime;
     }
 
-    @Override
     public void changeSongInfo(String url) {
-        Log.d(LOG_TAG, "changeSongInfo to " + url);
+//        Log.d(LOG_TAG, "changeSongInfo to " + url);
 
         mLastKnownPosition = 0;
         mSeekBar.setProgress(0);

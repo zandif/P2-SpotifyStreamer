@@ -158,7 +158,7 @@ public class MusicProvider extends ContentProvider {
                 long _id = db.insert(MusicContract.TrackEntry.TABLE_NAME, null, values);
                 if (_id > 0) {
                     //TODO: Determine correct return URI
-                    Log.d(LOG_TAG, "ID of inserted = "+ _id);
+//                    Log.d(LOG_TAG, "ID of inserted = "+ _id);
                     returnUri = MusicContract.TrackEntry.buildTrackByTrackID(values.getAsString
                             (MusicContract.TrackEntry.COLUMN_TRACK_ID));
 //                    returnUri = MusicContract.TrackEntry.buildTrackByTrackID(Long.toString(_id));

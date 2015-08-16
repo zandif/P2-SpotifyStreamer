@@ -55,14 +55,14 @@ public class TopTracksActivityFragment extends Fragment {
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
-        Log.d(LOG_TAG, "onCreate");
+//        Log.d(LOG_TAG, "onCreate");
         super.onCreate(savedInstanceState);
         this.setRetainInstance(true);
     }
 
     @Override
     public void onSaveInstanceState(Bundle outState){
-        Log.d(LOG_TAG, "onSaveInstanceState");
+//        Log.d(LOG_TAG, "onSaveInstanceState");
         outState.putParcelableArrayList(PARCEL_KEY, mTracksList);
 //        Log.i(TopTracksActivityFragment.class.getSimpleName(), "Saving " + mTracksList.size() +
 //                " entries to parcel.");
@@ -72,7 +72,7 @@ public class TopTracksActivityFragment extends Fragment {
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
-        Log.d(LOG_TAG, "onCreateView");
+//        Log.d(LOG_TAG, "onCreateView");
 
         View rootView = inflater.inflate(R.layout.fragment_toptracks, container, false);
 
@@ -90,8 +90,8 @@ public class TopTracksActivityFragment extends Fragment {
                 mArtistId = intent.getStringExtra(Intent.EXTRA_UID);
             }
 
-            Log.d(LOG_TAG, "Intent pulled the following values: " + mArtistId + " = " +
-                    mArtistName);
+//            Log.d(LOG_TAG, "Intent pulled the following values: " + mArtistId + " = " +
+//                    mArtistName);
         }
 
         Bundle arguments = getArguments();
@@ -99,23 +99,17 @@ public class TopTracksActivityFragment extends Fragment {
             mArtistId = arguments.getString(ARTIST_ID_KEY);
             mArtistName = arguments.getString(ARTIST_NAME_KEY);
             mArtistImageURL = arguments.getString(ARTIST_ICON_KEY);
-            Log.d(LOG_TAG, "arguments pulled the following values: " + mArtistId + " = " +
-                    mArtistName);
+//            Log.d(LOG_TAG, "arguments pulled the following values: " + mArtistId + " = " +
+//                    mArtistName);
         }
 
         if (savedInstanceState == null || !savedInstanceState.containsKey(PARCEL_KEY)) {
             mTracksList = new ArrayList<>(10);
-            Log.d(LOG_TAG, "Empty list");
+//            Log.d(LOG_TAG, "Empty list");
         } else {
             mTracksList = savedInstanceState.getParcelableArrayList(PARCEL_KEY);
-            Log.d(LOG_TAG, "Got " + mTracksList.size() + " entries from parcel.");
+//            Log.d(LOG_TAG, "Got " + mTracksList.size() + " entries from parcel.");
         }
-
-//        mTracksList.add(new TrackInfo("0", "A Sky Full of Stars", "0", null, "Ghost " +
-//                "Stories"));
-//        mTracksList.add(new TrackInfo("1", "Fix You", "1", null, "X&Y"));
-//        mTracksList.add(new TrackInfo("2", "The Scientist", "2", null, "A Rush of Blood to " +
-//                "the..."));
 
         mTracksAdapter = new TopTracksArrayAdapter(getActivity(),R.layout.list_item_toptracks,
                 mTracksList);
@@ -197,7 +191,7 @@ public class TopTracksActivityFragment extends Fragment {
                     Uri insertedItem = getActivity().getContentResolver().insert(MusicContract.TrackEntry
                                     .TRACK_CONTENT_URI,
                             inTrackInfo[i].getContentValues());
-                    Log.d(LOG_TAG, "Inserted track: " + insertedItem.toString());
+//                    Log.d(LOG_TAG, "Inserted track: " + insertedItem.toString());
 
                 }
             } else {
