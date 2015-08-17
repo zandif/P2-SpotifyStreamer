@@ -1,6 +1,8 @@
 package net.vectortime.p2_spotifystreamer;
 
 import android.content.Context;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
 import android.os.AsyncTask;
 import android.app.Fragment;
 import android.os.Bundle;
@@ -28,6 +30,7 @@ import java.util.List;
 import kaaes.spotify.webapi.android.SpotifyApi;
 import kaaes.spotify.webapi.android.models.Artist;
 import kaaes.spotify.webapi.android.models.ArtistsPager;
+import retrofit.RetrofitError;
 
 /**
  * A placeholder fragment containing a simple view.
@@ -105,6 +108,14 @@ public class MainActivityFragment extends Fragment {
         return rootView;
     }
 
+    // Network check - as suggested by reviewer
+    // Pulled from http://stackoverflow.com/questions/4238921/detect-whether-there-is-an-internet-connection-available-on-android
+    private boolean isNetworkAvailable() {
+        ConnectivityManager connectivityManager = (ConnectivityManager) getActivity().getSystemService(Context.CONNECTIVITY_SERVICE);
+        NetworkInfo activeNetworkInfo = connectivityManager.getActiveNetworkInfo();
+        return activeNetworkInfo != null && activeNetworkInfo.isConnected();
+    }
+
     private class ArtistArrayAdapter extends ArrayAdapter<ArtistInfo> {
         private final String LOG_TAG = ArtistArrayAdapter.class.getSimpleName();
 
@@ -154,27 +165,40 @@ public class MainActivityFragment extends Fragment {
 
             SpotifyApi api = new SpotifyApi();
 
-            ArtistsPager results = api.getService().searchArtists(artistQueryName);
-            if (results.artists.items.size() < 1)
-                results = api.getService().searchArtists(artistQueryName + "*");
-            List<Artist> artists = results.artists.items;
             List<ArtistInfo> info = new ArrayList<>();
-            for (int i = 0; i < artists.size(); i++){
-                Artist artist = artists.get(i);
+            if (isNetworkAvailable()) {
+                try {
+
+                    ArtistsPager results = api.getService().searchArtists(artistQueryName);
+                    if (results.artists.items.size() < 1)
+                        results = api.getService().searchArtists(artistQueryName + "*");
+                    List<Artist> artists = results.artists.items;
+
+                    for (int i = 0; i < artists.size(); i++) {
+                        Artist artist = artists.get(i);
 //                Log.i(LOG_TAG, i + " " + mArtistText.name);
-                info.add(new ArtistInfo(artist.name, artist.images, artist.id));
+                        info.add(new ArtistInfo(artist.name, artist.images, artist.id));
 //                for (int j = 0; j < mArtistText.images.size(); j++) {
 //                    Log.i(LOG_TAG, j + " " + mArtistText.images.get(j).url + " " + mArtistText.images.get
 //                            (j).width.toString() + "x" + mArtistText.images.get(j).height.toString());
 //                }
+                    }
+                } catch (RetrofitError error) {
+                    return null;
+                }
+            } else {
+                return null;
             }
+
             return info.toArray(new ArtistInfo[info.size()]);
         }
 
         @Override
         protected void onPostExecute(ArtistInfo[] inArtistInfo) {
             super.onPostExecute(inArtistInfo);
-            if (inArtistInfo != null && inArtistInfo.length > 0) {
+            if (inArtistInfo == null) {
+                showToast("Error with network connection. Please check your network settings");
+            } else if (inArtistInfo != null && inArtistInfo.length > 0) {
                 mArtistsAdapter.clear();
                 int max = 10;
                 if (inArtistInfo.length < 10)
@@ -184,6 +208,7 @@ public class MainActivityFragment extends Fragment {
                 }
             } else {
                 // Display a toast
+                showToast("No results found for that artist: " + artistQueryName);
                 Context context = getActivity();
                 CharSequence text = "No results found for that mArtistText: " + artistQueryName;
                 int duration = Toast.LENGTH_SHORT;
@@ -191,6 +216,14 @@ public class MainActivityFragment extends Fragment {
                 toast.show();
             }
         }
+    }
+
+    public void showToast (CharSequence inText) {
+        Context context = getActivity();
+        CharSequence text = inText;
+        int duration = Toast.LENGTH_SHORT;
+        Toast toast = Toast.makeText(context, text, duration);
+        toast.show();
     }
 
     public interface Callback {

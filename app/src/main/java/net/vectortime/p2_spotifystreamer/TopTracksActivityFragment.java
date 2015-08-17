@@ -3,6 +3,8 @@ package net.vectortime.p2_spotifystreamer;
 import android.app.FragmentManager;
 import android.content.Context;
 import android.content.Intent;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.app.Fragment;
@@ -33,6 +35,7 @@ import java.util.Map;
 import kaaes.spotify.webapi.android.SpotifyApi;
 import kaaes.spotify.webapi.android.models.Track;
 import kaaes.spotify.webapi.android.models.Tracks;
+import retrofit.RetrofitError;
 
 /**
  * A placeholder fragment containing a simple view.
@@ -150,6 +153,16 @@ public class TopTracksActivityFragment extends Fragment {
         return rootView;
     }
 
+    // Network check - as suggested by reviewer
+    // Pulled from http://stackoverflow.com/questions/4238921/detect-whether-there-is-an-internet-connection-available-on-android
+    private boolean isNetworkAvailable() {
+        ConnectivityManager connectivityManager
+                = (ConnectivityManager) getActivity().getSystemService(Context
+                .CONNECTIVITY_SERVICE);
+        NetworkInfo activeNetworkInfo = connectivityManager.getActiveNetworkInfo();
+        return activeNetworkInfo != null && activeNetworkInfo.isConnected();
+    }
+
     private class SearchSpotifyTopTracksTask extends AsyncTask<String, Void, TrackInfo[]> {
         private final String LOG_TAG = SearchSpotifyTopTracksTask.class.getSimpleName();
 
@@ -164,16 +177,27 @@ public class TopTracksActivityFragment extends Fragment {
             SpotifyApi api = new SpotifyApi();
             Map<String, Object> map = new HashMap<>();
             map.put("country", Locale.getDefault().getCountry());
-            Tracks tracks = api.getService().getArtistTopTrack(artistQueryId, map);
+            List<TrackInfo> info = null;
 
-            List<TrackInfo> info = new ArrayList<>();
-            for (int i = 0; i < tracks.tracks.size(); i++){
-                Track track = tracks.tracks.get(i);
-//                Log.i(LOG_TAG, i + " " + track.name);
-                TrackInfo tempInfo = new TrackInfo(track.id, track.name, track.preview_url, track
-                        .album.id, track.album.images, track.album.name,track.duration_ms,i,track
-                        .artists.get(0).id,track.artists.get(0).name);
-                info.add(tempInfo);
+            if (isNetworkAvailable()) {
+                try {
+                    Tracks tracks = api.getService().getArtistTopTrack(artistQueryId, map);
+
+                    info = new ArrayList<>();
+
+                    for (int i = 0; i < tracks.tracks.size(); i++) {
+                        Track track = tracks.tracks.get(i);
+//                        Log.i(LOG_TAG, i + " " + track.name);
+                        TrackInfo tempInfo = new TrackInfo(track.id, track.name, track.preview_url, track
+                                .album.id, track.album.images, track.album.name, track.duration_ms, i, track
+                                .artists.get(0).id, track.artists.get(0).name);
+                        info.add(tempInfo);
+                    }
+                } catch (RetrofitError error) {
+                    return null;
+                }
+            } else {
+                return null;
             }
             return info.toArray(new TrackInfo[info.size()]);
         }
@@ -181,7 +205,9 @@ public class TopTracksActivityFragment extends Fragment {
         @Override
         protected void onPostExecute(TrackInfo[] inTrackInfo) {
             super.onPostExecute(inTrackInfo);
-            if (inTrackInfo != null && inTrackInfo.length > 0) {
+            if (inTrackInfo == null) {
+                showToast("Error with network connection.  Please check your network settings");
+            } else if (inTrackInfo != null && inTrackInfo.length > 0) {
                 mTracksAdapter.clear();
                 int max = 10;
                 if (inTrackInfo.length < 10)
@@ -196,12 +222,16 @@ public class TopTracksActivityFragment extends Fragment {
                 }
             } else {
                 // Display a toast
-                Context context = getActivity();
-                CharSequence text = "No track results found for the mArtistText " + mArtistName;
-                int duration = Toast.LENGTH_SHORT;
-                Toast toast = Toast.makeText(context, text, duration);
-                toast.show();
+                showToast("No track results found for the artist " + mArtistName);
             }
+        }
+
+        public void showToast (CharSequence inText) {
+            Context context = getActivity();
+            CharSequence text = inText;
+            int duration = Toast.LENGTH_SHORT;
+            Toast toast = Toast.makeText(context, text, duration);
+            toast.show();
         }
     }
 
@@ -226,7 +256,7 @@ public class TopTracksActivityFragment extends Fragment {
             ImageView iconView = (ImageView) convertView.findViewById(R.id
                     .list_item_toptracks_imageview);
             String thumbnailURL = trackInfo.getSmallestImage();
-            if (thumbnailURL != null)
+            if (thumbnailURL != null && thumbnailURL.length() > 0)
 //                Picasso.with(getContext()).load("http://i.imgur.com/DvpvklR.png").into(iconView);
                 Picasso.with(getContext()).load(trackInfo.getSmallestImage()).into(iconView);
             else
